@@ -38,27 +38,22 @@ class AuthController extends Controller{
 //     }
 use Tymon\JWTAuth\Exceptions\JWTException;
 
+// app/Http/Controllers/AuthController.php
     public function login(Request $request)
     {
-        $credentials = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required'
-        ]);
-
-    try {
-        if (!$token = auth('api')->attempt($credentials)) {
+        $cred = $request->validate(['email'=>'required|email','password'=>'required']);
+        if (!$token = auth('api')->attempt($cred)) {
             return response()->json(['error' => 'Invalid credentials'], 401);
         }
-    } catch (JWTException $e) {
-        // TEMP: reveal the exact server error so we can fix quickly
-        return response()->json(['error' => 'JWT error', 'detail' => $e->getMessage()], 500);
+        return response()->json([
+            'access_token' => $token,
+            'token_type'   => 'bearer',
+            'expires_in'   => auth('api')->factory()->getTTL() * 60,
+            'user'         => auth('api')->user(),
+        ]);
     }
+    public function logout(){ auth('api')->logout(); return response()->json(['message'=>'Logged out']); }
+    public function me(){ return response()->json(auth('api')->user()); }
 
-    return response()->json([
-        'access_token' => $token,
-        'token_type'   => 'bearer',
-        'expires_in'   => auth('api')->factory()->getTTL() * 60,
-        'user'         => auth('api')->user(),
-    ]);
 }
-}
+
