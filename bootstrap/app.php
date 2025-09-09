@@ -22,7 +22,9 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
-use Illuminate\Http\Middleware\HandleCors; // <-- add this
+use Illuminate\Http\Middleware\HandleCors; 
+use Tymon\JWTAuth\Http\Middleware\Authenticate as JwtAuthenticate;
+use Tymon\JWTAuth\Http\Middleware\RefreshToken as JwtRefresh;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -37,7 +39,13 @@ return Application::configure(basePath: dirname(__DIR__))
 
         // (optional) or only for the API group:
         // $middleware->group('api', [HandleCors::class]);
+        // Register JWT aliases (Laravel 11)
+        $middleware->alias([
+            'jwt.auth'    => JwtAuthenticate::class,
+            'jwt.refresh' => JwtRefresh::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
     })->create();
+
