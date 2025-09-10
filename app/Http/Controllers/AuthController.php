@@ -3,57 +3,42 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Throwable;
 
-class AuthController extends Controller{
-// {
-//     public function login(Request $request)
-//     {
-//         $credentials = $request->validate([
-//             'email'    => 'required|email',
-//             'password' => 'required',
-//         ]);
-
-//         // IMPORTANT: use the JWT guard
-//         if (!$token = auth('api')->attempt($credentials)) {
-//             return response()->json(['error' => 'Invalid credentials'], 401);
-//         }
-
-//         return response()->json([
-//             'access_token' => $token,
-//             'token_type'   => 'bearer',
-//             'expires_in'   => auth('api')->factory()->getTTL() * 60,
-//             'user'         => auth('api')->user(),
-//         ]);
-//     }
-
-//     public function logout()
-//     {
-//         auth('api')->logout();
-//         return response()->json(['message' => 'Successfully logged out']);
-//     }
-
-//     public function me()
-//     {
-//         return response()->json(auth('api')->user());
-//     }
-use Tymon\JWTAuth\Exceptions\JWTException;
-
-// app/Http/Controllers/AuthController.php
+class AuthController extends Controller
+{
     public function login(Request $request)
     {
-        $cred = $request->validate(['email'=>'required|email','password'=>'required']);
-        if (!$token = auth('api')->attempt($cred)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
-        return response()->json([
-            'access_token' => $token,
-            'token_type'   => 'bearer',
-            'expires_in'   => auth('api')->factory()->getTTL() * 60,
-            'user'         => auth('api')->user(),
+        $cred = $request->validate([
+            'email'    => ['required','email'],
+            'password' => ['required','string'],
         ]);
+
+        try {
+            if (!$token = Auth::guard('api')->attempt($cred)) {
+                return response()->json(['message' => 'Invalid credentials'], 401);
+            }
+
+            return response()->json([
+                'access_token' => $token,
+                'token_type'   => 'bearer',
+                'expires_in'   => auth('api')->factory()->getTTL() * 60,
+            ], 200);
+
+        } catch (Throwable $e) {
+            // Return a safe JSON error instead of a 500 HTML page
+            return response()->json([
+                'message' => 'Login failed',
+                'hint'    => 'Check APP_KEY and JWT_SECRET env vars, and jwt-auth is installed',
+            ], 500);
+        }
     }
-    public function logout(){ auth('api')->logout(); return response()->json(['message'=>'Logged out']); }
-    public function me(){ return response()->json(auth('api')->user()); }
+
+    public function me()
+    {
+        return response()->json(Auth::guard('api')->user());
+    }
 
 }
 
